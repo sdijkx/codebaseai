@@ -180,7 +180,7 @@ def create_full_report(report, output_dir, run_chain, model_name):
     logger.info(f"Full analysis summary saved to {output_file_path}")
     return ai_response
 
-def create_report_with_openai(report_dir, output_dir, run_chain, model_name):
+def create_report_with_llm(report_dir, output_dir, run_chain, model_name):
     """
     Generates analysis reports using OpenAI.
 
@@ -198,13 +198,13 @@ def create_report_with_openai(report_dir, output_dir, run_chain, model_name):
             with open(report_path, "r") as f:
                 report = f.read()
                 if "vulture_report.txt" in report_file:
-                    full_report += "Vulture Report:\n" + create_vulture_report(report) + "\n\n"
+                    full_report += "Vulture Report:\n" + create_vulture_report(report, output_dir, run_chain, model_name) + "\n\n"
                 elif "pylint_report.txt" in report_file:
-                    full_report += "Pylint Report:\n" + create_pylint_report(report) + "\n\n"
+                    full_report += "Pylint Report:\n" + create_pylint_report(report, output_dir, run_chain, model_name) + "\n\n"
                 elif "radon_cc_report.txt" in report_file:
-                    full_report += "Radon cc Report:\n" + create_radon_cc_report(report) + "\n\n"
+                    full_report += "Radon cc Report:\n" + create_radon_cc_report(report, output_dir, run_chain, model_name) + "\n\n"
                 elif "radon_mi_report.txt" in report_file:
-                    full_report += "Radon mi Report:\n" + create_radon_mi_report(report) + "\n\n"
+                    full_report += "Radon mi Report:\n" + create_radon_mi_report(report, output_dir, run_chain, model_name) + "\n\n"
     if len(full_report) > 0:
         create_full_report(full_report, output_dir, run_chain, model_name)
     logger.info(f"Reports generated")

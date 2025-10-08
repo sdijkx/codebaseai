@@ -1,11 +1,8 @@
-Here is (part of) a method from a Java class. This methods might contain neo4j API version 3.5 code. 
-Refactor the method to use neo4j API version 5.+ code. Output the refactored method only.
-When there is nothing to refactor, output the original method. 
+Here is (part of) a method from a Java class.  
 Please refrain from any comments: the output needs to only Java code! 
 Key instructions:
-    - Refactor the method to use neo4j API version 5.+ code: `success` is replaced with `commit`, and methods such as `getNodes`, 
-      `getNodesById` and many/ are move to the `Transaction` class, amongs other changes. Also database creation, configuration and shutdown were changed
-    - for the `hasRelationship` and `getRelationships` methods the parameter order has changed  
+    - Output plain java code, do not use a java block like: '```java ... ```' 
+    - Add comments to classes and methods
     - Output the refactored method only.
     - When there is nothing to refactor, output the original method.
     - it is Java code, not JavaScript. Make sure all variables are typed for example

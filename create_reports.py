@@ -6,6 +6,8 @@ improvement. The script requires an OpenAI API key and uses environment variable
 
 import argparse
 import logging
+from dotenv import load_dotenv
+
 import codebaseai
 from common import setup_logger, get_path, for_each_file
 
@@ -24,6 +26,7 @@ args = parser.parse_args()
 logger = logging.getLogger(__name__)
 setup_logger(args.log_file, args.log_level,args.log_silent)
 
+import os
 
 def main():
     """
@@ -33,9 +36,12 @@ def main():
         Checks the existence of the report directory and initiates the report generation process.
         Logs errors and information messages.
     """
-    MODEL_NAME = codebaseai.get_model_name(args.llm_name, args.model_name)
+    
+    load_dotenv()
+
+    (llm_name, model_name) = codebaseai.get_model_name(args.llm_name, args.model_name)
     #initialize ai
-    codebaseai.load_llm(args.llm_name)
+    codebaseai.load_llm(llm_name)
     run_chain = codebaseai.run_chain()
 
     REPORT_DIR = get_path(args.report_dir)
@@ -43,7 +49,7 @@ def main():
 
     logger.info(f"Analyzing reports at: {REPORT_DIR}")
     logger.info(f"AI reports will be saved to: {OUTPUT_DIR}")
-    codebaseai.create_report_with_openai(REPORT_DIR, OUTPUT_DIR, run_chain, MODEL_NAME)
+    codebaseai.create_report_with_llm(REPORT_DIR, OUTPUT_DIR, run_chain, model_name)
 
 if __name__ == "__main__":
     main()

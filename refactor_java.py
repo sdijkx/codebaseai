@@ -2,6 +2,7 @@ import logging
 import argparse
 import os
 import codebaseai
+import dotenv
 from common import setup_logger, get_path, for_each_file
 
 """
@@ -33,25 +34,26 @@ if __name__ == "__main__":
 
     SRC_DIR = get_path(args.java_dir)
     OUTPUT_DIR = get_path(args.output_dir, create_if_not_exists=True)
-    MODEL_NAME = codebaseai.get_model_name(args.llm_name, args.model_name)
+    dotenv.load_dotenv()
+    (llm_name, model_name) = codebaseai.get_model_name(args.llm_name, args.model_name)
     #initialize ai
-    codebaseai.load_llm(args.llm_name)
+    codebaseai.load_llm(llm_name)
     run_chain = codebaseai.run_chain()
 
-    connection = codebaseai.create_connection(MODEL_NAME)
+    connection = codebaseai.create_connection(model_name)
     with open(args.prompt, 'r', encoding='utf-8') as prompt_file:
         prompt_text = prompt_file.read()
     for file_path in for_each_file(SRC_DIR, file_ext=".java"):
-            output_file_path = OUTPUT_DIR / os.path.relpath(file_path, SRC_DIR)
-
-            if os.path.exists(output_file_path) and os.path.getmtime(file_path) < os.path.getmtime(output_file_path):
-                logger.info(f"Skipping {file_path} as it is not newer than the existing output.")
-            else:
-                logger.info(f"Refactoring {file_path}.")
-                os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
-                refactored_code = codebaseai.extract_and_refactor_methods(file_path, prompt_text, connection, run_chain, MODEL_NAME)
-                with open(output_file_path, "w") as output_file:
-                    output_file.write(refactored_code)
-                    logger.info(f"Refactored code written to: {output_file_path}")
-                codebaseai.run_command(f"astyle -n --style=java {output_file_path}", None, logger)
+        output_file_path = OUTPUT_DIR / os.path.relpath(file_path, SRC_DIR)
+        if os.path.exists(output_file_path) and os.path.getmtime(file_path) < os.path.getmtime(output_file_path):
+            logger.info(f"Skipping {file_path} as it is not newer than the existing output.")
+        else:
+            logger.info(f"Refactoring {file_path}.")
+            os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
+            logger.debug(f"Refactoring {file_path} to {output_file_path} using model {model_name} and prompt from {prompt_text}")
+            refactored_code = codebaseai.extract_and_refactor_methods(file_path, prompt_text, connection, run_chain, model_name)
+            with open(output_file_path, "w") as output_file:
+                output_file.write(refactored_code)
+                logger.info(f"Refactored code written to: {output_file_path}")
+            codebaseai.run_command(f"astyle -n --style=java {output_file_path}", None, logger)
     logger.info("Refactoring completed.")

@@ -19,8 +19,8 @@ def load_llm(llm_name):
         global llm_module
         llm_module = importlib.import_module('codebaseai.ai_' + llm_name)
         logger.info(f"Using: module 'ai_{llm_name}'.")
-    except:
-        logger.error(f"Error: module 'ai_{llm_name}' not found.")
+    except Exception as e:
+        logger.error(f"Error loading module 'ai_{llm_name}'.", e)
         sys.exit(1)
 
 def run_chain() :
@@ -71,4 +71,4 @@ def get_model_name(llm, llm_model):
     else:
         logger.info(f"Using specified LLM model: {llm_model}")
 
-    return llm_model
+    return (llm, llm_model)

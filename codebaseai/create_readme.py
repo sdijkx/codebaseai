@@ -51,7 +51,7 @@ def create_readme(input, output_doc, run_chain, model_name):
         ai_response = ai_response[:-3]
 
     if len(ai_response.strip()) > 0:
-        with open(output_doc, "w") as output_file:
+        with open(output_doc, "w+") as output_file:
             output_file.write(ai_response)
         logger.info(f"README.md created in {output_doc}")
     else:

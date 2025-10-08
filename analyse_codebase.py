@@ -8,7 +8,7 @@ import os
 import sys
 import argparse
 import logging
-from commands import run_command
+from codebaseai.commands import run_command
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(description="Analyze a codebase using various tools.")
