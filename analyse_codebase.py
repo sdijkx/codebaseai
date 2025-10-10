@@ -8,35 +8,23 @@ import os
 import sys
 import argparse
 import logging
-from codebaseai.commands import run_command
-
-# Parse command line arguments
-parser = argparse.ArgumentParser(description="Analyze a codebase using various tools.")
-parser.add_argument("-c", "--codebase_dir", required=True, help="The directory of the codebase to analyze.")
-parser.add_argument("-o", "--output_dir", required=True, help="The directory to save the analysis reports.")
-parser.add_argument("-l", "--log_file", default='./analysis.log', help="The file to save the log.")
-args = parser.parse_args()
-
-# Define the codebase directory to analyze and the output directory
-CODEBASE_DIR = args.codebase_dir
-OUTPUT_DIR = args.output_dir
-if not OUTPUT_DIR.endswith('/'):
-    OUTPUT_DIR += '/'
-
-# Ensure output directory exists
-os.makedirs(OUTPUT_DIR, exist_ok=True)
-
-# Configure logging
-logging.basicConfig(
-    filename=args.log_file,
-    level=logging.DEBUG,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+from codebaseai import run_command, setup_logger
 
 # Create a logger object
 logger = logging.getLogger(__name__)
 
-def analyze_with_vulture():
+
+# Parse command line arguments
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Analyze a codebase using various tools.")
+    parser.add_argument("-c", "--codebase_dir", required=True, help="The directory of the codebase to analyze.")
+    parser.add_argument("-o", "--output_dir", required=True, help="The directory to save the analysis reports.")
+    parser.add_argument("-l", "--log_file", default='./analysis.log', help="The file to save the log.")
+    args = parser.parse_args()
+    return args
+
+
+def analyze_with_vulture(output_dir: str, codebase_dir: str):
     """
     Finds unused code using Vulture.
 
@@ -45,11 +33,11 @@ def analyze_with_vulture():
         Logs the process of running Vulture.
     """
     logger.info("Running vulture...")
-    output_file = os.path.join(OUTPUT_DIR, "vulture_report.txt")
-    command = f"vulture {CODEBASE_DIR}"
+    output_file = os.path.join(output_dir, "vulture_report.txt")
+    command = f"vulture {codebase_dir}"
     run_command(command, output_file, logger)
 
-def analyze_with_pylint():
+def analyze_with_pylint(output_dir: str, codebase_dir: str):
     """
     Checks code quality with Pylint.
 
@@ -58,11 +46,11 @@ def analyze_with_pylint():
         Logs the process of running Pylint.
     """
     logger.info("Running pylint...")
-    output_file = os.path.join(OUTPUT_DIR, "pylint_report.txt")
-    command = f"pylint {CODEBASE_DIR} --output-format=text"
+    output_file = os.path.join(output_dir, "pylint_report.txt")
+    command = f"pylint {codebase_dir} --output-format=text"
     run_command(command, output_file, logger)
 
-def analyze_with_radon():
+def analyze_with_radon(output_dir: str, codebase_dir: str):
     """
     Analyzes code complexity and maintainability using Radon.
 
@@ -72,13 +60,13 @@ def analyze_with_radon():
         Logs the process of running Radon.
     """
     logger.info("Running radon cc (Cyclomatic Complexity)...")
-    cc_output = os.path.join(OUTPUT_DIR, "radon_cc_report.txt")
-    command_cc = f"radon cc {CODEBASE_DIR} -a -s"
+    cc_output = os.path.join(output_dir, "radon_cc_report.txt")
+    command_cc = f"radon cc {codebase_dir} -a -s"
     run_command(command_cc, cc_output, logger)
 
     logger.info("Running radon mi (Maintainability Index)...")
-    mi_output = os.path.join(OUTPUT_DIR, "radon_mi_report.txt")
-    command_mi = f"radon mi {CODEBASE_DIR} -s"
+    mi_output = os.path.join(output_dir, "radon_mi_report.txt")
+    command_mi = f"radon mi {codebase_dir} -s"
     run_command(command_mi, mi_output, logger)
 
 def main():
@@ -91,19 +79,32 @@ def main():
         Logs the overall process and results of the analysis.
         Exits the program if the codebase directory does not exist.
     """
-    if not os.path.exists(CODEBASE_DIR):
-        logger.error(f"Error: Directory {CODEBASE_DIR} does not exist.")
+    args = parse_args()
+    # Configure logging
+    setup_logger(args.log_file, logging.DEBUG, True)
+
+    # Define the codebase directory to analyze and the output directory
+    codebase_dir = args.codebase_dir
+    output_dir = args.output_dir
+    if not output_dir.endswith('/'):
+        output_dir += '/'
+
+    # Ensure output directory exists
+    os.makedirs(output_dir, exist_ok=True)
+
+    if not os.path.exists(codebase_dir):
+        logger.error(f"Error: Directory {codebase_dir} does not exist.")
         sys.exit(1)
 
-    logger.info(f"Analyzing codebase at: {CODEBASE_DIR}")
-    logger.info(f"Reports will be saved to: {OUTPUT_DIR}")
+    logger.info(f"Analyzing codebase at: {codebase_dir}")
+    logger.info(f"Reports will be saved to: {output_dir}")
 
     # Run analysis tools
-    analyze_with_vulture()
-    analyze_with_pylint()
-    analyze_with_radon()
+    analyze_with_vulture(output_dir, codebase_dir)
+    analyze_with_pylint(output_dir, codebase_dir)
+    analyze_with_radon(output_dir, codebase_dir)
 
-    logger.info(f"Code analysis completed. Check the reports in the '{OUTPUT_DIR}' folder.")
+    logger.info(f"Code analysis completed. Check the reports in the '{output_dir}' folder.")
 
 if __name__ == "__main__":
     main()

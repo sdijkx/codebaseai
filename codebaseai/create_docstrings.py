@@ -3,6 +3,7 @@ import re
 import pathlib
 import logging
 import langchain_core.prompts as prompts
+from codebaseai import run_chain
 
 logger = logging.getLogger(__name__)
 
@@ -10,7 +11,7 @@ logger = logging.getLogger(__name__)
 RE_MATCH_PYTHON_BLOCK = re.compile(r"```(?:python)(.*?)```", re.DOTALL | re.IGNORECASE)
 
 
-def create_docstrings(script:pathlib.Path, output_file_path:pathlib.Path, run_chain, model_name):
+def create_docstrings(script:pathlib.Path, output_file_path:pathlib.Path, model_name=None):
     """
     Creates docstrings for a given Python script using OpenAI's language model.
 
@@ -64,7 +65,11 @@ def create_docstrings(script:pathlib.Path, output_file_path:pathlib.Path, run_ch
     ai_response = run_chain(prompt, script, model_name)
 
     #capture Python code from response
-    python_ai_response = RE_MATCH_PYTHON_BLOCK.search(ai_response).group(1)
+    match = RE_MATCH_PYTHON_BLOCK.search(ai_response)
+    if match is not None:
+        python_ai_response = match.group(1).strip()
+    else:
+        python_ai_response = None  # or handle the case appropriately
 
     #write output file
     with open(output_file_path, "w") as output_file:

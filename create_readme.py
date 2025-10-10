@@ -1,125 +1,55 @@
 import os
+import sys
 import argparse
 import logging
 from pathlib import Path
 from langchain_core.prompts import ChatPromptTemplate
-from common import setup_logger, get_path as get_directory_path_or_exit
-import codebaseai
-import dotenv
+from codebaseai import create_readme, import_llm_module, setup_logger, get_path as get_directory_path_or_exit
+from dotenv import load_dotenv
 
 """
 This script analyzes a codebase and creates or updates a README.md file using AI. 
 It extracts information from various files in the codebase and uses an AI model to generate a comprehensive README.md.
 """
 
-# Parse command line arguments
-parser = argparse.ArgumentParser(description="Create / update README based on the analysis of a codebase using AI.")
-parser.add_argument("-c", "--codebase_dir", required=True, help="The directory of the codebase (module level) to analyze.")
-parser.add_argument("-o", "--output", required=True, help="The location of the README file.")
-parser.add_argument("-t", "--title", default="Repository documentation", help="Title of the documentation")
-parser.add_argument("-l", "--log_file", default='./analysis.log', help="The file to save the log.")
-parser.add_argument("-L", "--log_level", default='INFO', help="The loglevel.")
-parser.add_argument("-S", "--log_silent", help="Suppress the log to stdout.", action='store_false')
-parser.add_argument("-m", "--model_name", default="", help="default model name.")
-parser.add_argument("-M", "--llm_name", default="", help="default lmm.")
-
-args = parser.parse_args()
-
-#initialize logger
+EXCLUDE = ['.git', '__pycache__', 'venv', 'node_modules', '.idea', '.vscode', '.pytest_cache', '.mypy_cache', '.env']
 logger = logging.getLogger(__name__)
-setup_logger(args.log_file, args.log_level,args.log_silent)
 
-CODEBASE_DIR = get_directory_path_or_exit(args.codebase_dir)
-OUTPUT_DOC = Path(args.output)
+# Parse command line arguments
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Create / update README based on the analysis of a codebase using AI.")
+    parser.add_argument("-c", "--codebase_dir", required=True, help="The directory of the codebase (module level) to analyze.")
+    parser.add_argument("-o", "--output", required=True, help="The location of the README file.")
+    parser.add_argument("-t", "--title", default="Repository documentation", help="Title of the documentation")
+    parser.add_argument("-l", "--log_file", default='./analysis.log', help="The file to save the log.")
+    parser.add_argument("-L", "--log_level", default='INFO', help="The loglevel.")
+    parser.add_argument("-S", "--log_silent", help="Suppress the log to stdout.", action='store_false')
+    parser.add_argument("-m", "--model_name", default="", help="default model name.")
+    parser.add_argument("-M", "--llm_name", default="", help="default lmm.")
+    args = parser.parse_args()
+    return args
 
-if not "README.md" in str(OUTPUT_DOC):
-    OUTPUT_DOC /= 'README.md'
+def analyse_codebase(codebase_dir: Path, title: str):
 
-if not OUTPUT_DOC.parent.exists():
-    os.makedirs(OUTPUT_DOC.parent)
-
-TITLE = args.title
-
-
-def create_readme(input):
     """
-    Generates or updates a README.md file based on the provided input using an AI model.
-
+    Analyzes the codebase and prepares input text for README generation.
     Args:
-        input (str): The input text containing information extracted from the codebase.
-
+        codebase_dir (Path): The directory of the codebase to analyze.
+        title (str): The title of the documentation.
     Returns:
-        str: The AI-generated README.md content.
-
+        str: The prepared input text for README generation.
     Side Effects:
-        - Writes the generated README.md content to the specified output file.
-        - Logs the success or failure of the README.md creation.
-
-    Raises:
-        - Logs an error if the AI response is empty.
+        Logs the analysis process.
     """
-    prompt = ChatPromptTemplate.from_template("""
-    A README.md serves as the main entry point for users and developers to understand and use the project. It should be clear, structured, and 
-    informative.
 
-    Please provide the README.md for the project. If the project already has a README.md, please update it: add and correct it when necessary. 
-    Keep information present in the README when still relevant, and remove or update outdated information. Feel free to add links and additional 
-    sections which you think are missing from the README. Suggestions for sections include: 
-    - Project Title & Description
-    - Installation Instructions
-    - Usage Guide
-    - Features
-    - Modules Overview
-    - Configuration & Customization
-    - Testing & Debugging
-    - Contributing Guide (for open-source projects)
-    - License & Author Information
-    
-    The files you can use as a reference are listed below, using $$$$$ as a separator:
-    
-    {input}
-        """
-    )
+    logger.info(f"Analyzing codebase at: {codebase_dir}")
 
-    ai_response = ""
-    ai_response = run_chain(prompt, input, MODEL_NAME)
-    if ai_response.startswith("```"):
-        ai_response = ai_response[9:].strip()
-    if ai_response.endswith("```"):
-        ai_response = ai_response[:-3]
-
-    if len(ai_response.strip()) > 0:
-        with open(OUTPUT_DOC, "w") as output_file:
-            output_file.write(ai_response)
-        logger.info(f"README.md created in {OUTPUT_DOC}")
-    else:
-        logger.error("AI response was empty file")
-    return ai_response
-
-def main():
-    """
-    Main function to analyze the codebase and generate or update the README.md file.
-
-    Side Effects:
-        - Logs the analysis process and any errors encountered.
-        - Calls the create_readme function to generate the README.md content.
-    """
-    dotenv.load_dotenv()
-    (llm_name, model_name) = codebaseai.get_model_name(args.llm_name, args.model_name)
-    codebaseai.load_llm(llm_name)
-    run_chain = codebaseai.run_chain()
-
-
-    logger.info(f"Analyzing codebase at: {CODEBASE_DIR}")
-    logger.info(f"README.md: {OUTPUT_DOC}")
-
-    input_text = f"$$$$$ Title:  {TITLE} $$$$$\n\n"
+    input_text = f"$$$$$ Title:  {title} $$$$$\n\n"
     readme_text = "$$$$$ NO EXISTING README.md, please create new one $$$$$\n"
 
-    exclude = ['.git', '__pycache__', 'venv', 'node_modules', '.idea', '.vscode', '.pytest_cache', '.mypy_cache', '.env']
-    for root, dirs, files in os.walk(CODEBASE_DIR,topdown=True):
+    for root, dirs, files in os.walk(codebase_dir,topdown=True):
 
-        dirs[:] = [d for d in dirs if d not in exclude]
+        dirs[:] = [d for d in dirs if d not in EXCLUDE]
 
         for file in files:
             file_path = Path(root) / Path(file)
@@ -146,7 +76,50 @@ def main():
 
             input_text += readme_text
 
-    codebaseai.create_readme(input_text, OUTPUT_DOC, run_chain, model_name)
+    return input_text
+
+
+def main():
+    """
+    Main function to analyze the codebase and generate or update the README.md file.
+
+    Side Effects:
+        - Logs the analysis process and any errors encountered.
+        - Calls the create_readme function to generate the README.md content.
+    """
+    try:
+        load_dotenv()
+        args = parse_args()
+        #initialize logger
+        setup_logger(args.log_file, args.log_level,args.log_silent)
+
+        #import ai module
+        import_llm_module(args.llm_name, args.model_name)
+
+
+        codebase_dir = get_directory_path_or_exit(args.codebase_dir)
+        output_doc = Path(args.output)
+
+        if not "README.md" in str(output_doc):
+            output_doc /= 'README.md'
+
+        if not output_doc.parent.exists():
+            os.makedirs(output_doc.parent)
+
+        if not os.path.exists(codebase_dir):
+            logger.error(f"Error: Directory {codebase_dir} does not exist.")
+            sys.exit(1)
+
+        title = args.title
+
+        input_text = analyse_codebase(codebase_dir, title)
+
+        logger.info(f"creating README.md: {output_doc}")
+        create_readme(input_text, output_doc)
+    
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}", exc_info=True)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

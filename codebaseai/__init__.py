@@ -1,8 +1,16 @@
 # CodebaseAI: A Python package for analyzing and improving codebases using AI.
-from codebaseai.ai import load_llm, run_chain, get_model_name, create_connection
+from codebaseai.llm_module import import_llm_module, run_chain, create_connection
 from codebaseai.create_docstrings import create_docstrings
-from codebaseai.mdocs_report import process_mdocs, create_mdocs_report, create_mdocs_onboarding
+from codebaseai.process_mdocs import process_mdocs
+from codebaseai.create_mdocs_report import create_mdocs_report
+from codebaseai.create_mdocs_onboarding import create_mdocs_onboarding
 from codebaseai.create_readme import create_readme
-from codebaseai.create_report import create_report_with_llm, create_vulture_report, create_pylint_report, create_radon_cc_report
+from codebaseai.create_vulture_report import create_vulture_report
+from codebaseai.create_pylint_report import create_pylint_report
+from codebaseai.create_radon_cc_report import create_radon_cc_report
+from codebaseai.create_radon_mi_report import create_radon_mi_report
+from codebaseai.create_full_report import create_full_report
+from codebaseai.create_report_with_llm import create_report_with_llm
 from codebaseai.refactor_java import refactor, extract_and_refactor_methods
-from codebaseai.commands import run_command
+from codebaseai.run_command import run_command
+from codebaseai.common import setup_logger, get_path, for_each_file

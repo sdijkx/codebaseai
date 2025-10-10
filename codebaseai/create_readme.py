@@ -1,9 +1,11 @@
 import logging
 import langchain_core.prompts as prompts
+from codebaseai import run_chain
+
 
 logger = logging.getLogger(__name__)
 
-def create_readme(input, output_doc, run_chain, model_name):
+def create_readme(input, output_doc, model_name=None):
     """
     Generates or updates a README.md file based on the provided input using an AI model.
 

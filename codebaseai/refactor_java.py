@@ -1,13 +1,14 @@
 import re
 import logging
 import langchain_core.prompts as prompts
+from codebaseai.llm_module import run_chain, create_connection
 
 logger = logging.getLogger(__name__)
 
 COMMENT_PATTERN = re.compile(r'/\*[\s\S]*?\*/|[^:]//[^\n]*')
 
 
-def refactor(method_code, prompt_text, connection, run_chain, model_name):
+def refactor(method_code, prompt_text, connection, model_name=None):
     """
     Refactors a given method using AI based on a provided prompt.
 
@@ -68,7 +69,7 @@ def restore_comments(refactored_code, comments):
         refactored_code = refactored_code.replace(f'/*COMMENT{i}*/', comment, 1)
     return refactored_code
 
-def extract_and_refactor_methods(file_path, prompt_text, connection, run_chain, model_name):
+def extract_and_refactor_methods(file_path, prompt_text, connection, model_name=None):
     """
     Extracts methods from a Java file, refactors them using AI, and restores comments.
 
@@ -122,7 +123,7 @@ def extract_and_refactor_methods(file_path, prompt_text, connection, run_chain, 
                     brace_count -= 1
                     if brace_count == 0:
                         method_body = stripped_code[start:i + 1]
-                        refactored_method = refactor(method_body, prompt_text, connection, run_chain, model_name)
+                        refactored_method = refactor(method_body, prompt_text, connection, model_name)
                         method_bodies[method_body] = refactored_method
                         break
 

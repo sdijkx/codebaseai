@@ -7,6 +7,9 @@ for other types of failures.
 """
 
 import subprocess
+import logging
+
+logger = logging.getLogger(__name__)
 
 def run_command(command, output_file, logger):
     """

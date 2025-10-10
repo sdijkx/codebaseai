@@ -37,7 +37,25 @@ if not OPENAI_API_KEY:
     logger.error("OpenAI API key not found. Please set the OPENAI_API_KEY environment variable.")
     sys.exit(1)
 
-def create_connection(model_name="gpt-4o"):
+DEFAULT_MODEL = os.getenv("LLM_MODEL", "gpt-4o")
+
+def set_model(model_name):
+    """
+    Sets the default model name for the LLM.
+    """
+    global DEFAULT_MODEL
+    if model_name:
+        DEFAULT_MODEL = model_name
+        
+def get_model():
+    """
+    Retrieves the current default model name for the LLM.
+    """
+    global DEFAULT_MODEL
+    return DEFAULT_MODEL
+
+
+def create_connection(model_name=None):
     """
     Establishes a connection to the OpenAI API using the specified model.
 
@@ -56,9 +74,12 @@ def create_connection(model_name="gpt-4o"):
     Future Work:
         - Consider allowing more configuration options for the connection.
     """
+    if model_name is None:
+        model_name = DEFAULT_MODEL
+
     return ChatOpenAI(temperature=0.1, model_name=model_name, streaming=True, api_key=OPENAI_API_KEY)
 
-def run_chain(prompt, input_data, model_name="gpt-4o", connection=None):
+def run_chain(prompt, input_data, model_name=None, connection=None):
     """
     Executes a chain of runnables to process input data and generate an AI response.
 
@@ -82,6 +103,9 @@ def run_chain(prompt, input_data, model_name="gpt-4o", connection=None):
         - Implement error handling for specific exceptions during chain execution.
         - Consider adding more detailed logging for debugging purposes.
     """
+    if model_name is None:
+        model_name = DEFAULT_MODEL
+
     response = ""
     try:
         if connection:
