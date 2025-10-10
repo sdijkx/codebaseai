@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+  python-app:
+    build: .
+    volumes:
+      - ${CODEBASEAI_DIR}:/app/codebaseai
+      - ${PROJECT_DIR}:/app/project
+      - ${JAVA_PROJECT_DIR}:/app/java_project
+    working_dir: /app
+    command: bash
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
+
+
