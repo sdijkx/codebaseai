@@ -15,5 +15,4 @@ echo "JAVA_PROJECT_DIR: $JAVA_PROJECT_DIR"
 
 cd docker
 docker-compose build
-# docker-compose exec python-app bash
 docker-compose run python-app bash
