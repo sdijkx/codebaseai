@@ -1,7 +1,13 @@
 version: "3.9"
 services:
   python-app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        UID: ${UID}
+        GID: ${GID}
+    user: "${UID}:${GID}"
     volumes:
       - ${CODEBASEAI_DIR}:/app/codebaseai
       - ${PROJECT_DIR}:/app/project

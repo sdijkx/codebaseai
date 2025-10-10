@@ -5,6 +5,8 @@ echo "Script directory: $SCRIPT_DIR"
 export CODEBASEAI_DIR=$(realpath ..)
 export PROJECT_DIR=$SCRIPT_DIR/example_projects/hello-world-python
 export JAVA_PROJECT_DIR=$SCRIPT_DIR/example_projects/hello-world-java
+export UID=$(id -u)
+export GID=$(id -g)
 
 echo "CODEBASEAI_DIR: $CODEBASEAI_DIR"
 echo "PROJECT_DIR: $PROJECT_DIR"
